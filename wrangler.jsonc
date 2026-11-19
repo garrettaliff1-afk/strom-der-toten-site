@@ -1,5 +1,14 @@
 {
   "name": "strom-der-toten-site",
+  "main": "worker.js",
   "compatibility_date": "2026-11-18",
-  "assets": { "directory": "." }
+  "workers_dev": true,
+  "assets": {
+    "directory": ".",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "strom-leaderboard", "database_id": "e9f68ef3-4d91-4e82-82b5-b226f15db182" }
+  ]
 }

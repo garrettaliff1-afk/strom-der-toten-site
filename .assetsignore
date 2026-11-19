@@ -1,6 +1,9 @@
 wrangler.jsonc
 .assetsignore
 README.md
+worker.js
+node_modules
+.wrangler
 .git
 .git/**
 .github

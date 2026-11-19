@@ -382,6 +382,31 @@ body.pad #game.ingame #cv{cursor:none}
 .stats b{display:block;font-family:var(--display);font-weight:400;font-size:22px;font-variant-numeric:tabular-nums}
 [hidden]{display:none!important}
 @media (prefers-reduced-motion:reduce){#announce.go{animation-duration:.01s}.card.forged{animation:none}}
+
+/* leaderboard */
+.lbname{all:unset;box-sizing:border-box;display:block;width:100%;padding:11px 14px;margin-top:2px;font:600 17px var(--body);color:var(--text);background:rgba(0,0,0,.45);border:1px solid var(--line);border-radius:3px;cursor:text}
+.lbname:focus{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.lbname::placeholder{color:#5d6672}
+.lbhead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.lbmodes{display:flex;gap:4px}
+.lbmodes button{all:unset;cursor:pointer;font:700 12px var(--body);letter-spacing:.14em;text-transform:uppercase;padding:6px 12px;border:1px solid var(--line);border-radius:3px;color:var(--dim)}
+.lbmodes button.on{color:#1a0a08;background:var(--gold);border-color:var(--gold)}
+.lbwrap{margin-top:10px;max-height:min(52vh,460px);overflow:auto;border:1px solid var(--line);border-radius:3px}
+.lbt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.lbt th{position:sticky;top:0;background:#14181d;text-align:right;font:700 11px var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);padding:8px 12px}
+.lbt td{text-align:right;padding:7px 12px;border-top:1px solid rgba(255,255,255,.05);font-size:15px}
+.lbt th:nth-child(2),.lbt td:nth-child(2){text-align:left}
+.lbt td:first-child{color:var(--dim);width:2.5em}
+.lbt td.rd{font:400 20px var(--display);color:var(--blood)}
+.lbt tr.me td{background:rgba(240,179,71,.1)}
+.lbt tr:nth-child(1) td:first-child{color:var(--gold)}
+.lbmsg{padding:22px;text-align:center;color:var(--dim)}
+.lbover{margin:6px 0 2px;font-size:14px;color:var(--dim)}
+.lbover b{color:var(--gold)}
+.lbover .row{display:flex;gap:6px;justify-content:center;margin-top:6px}
+.lbover .lbname{width:auto;flex:1;max-width:240px;padding:8px 12px;font-size:16px}
+.lbover button{all:unset;cursor:pointer;font:400 16px var(--display);background:var(--gold);color:#1a0a08;padding:8px 16px;border-radius:3px}
+.lbover a{color:var(--gold)}
 </style>
 
 <div id="game">
@@ -418,6 +443,7 @@ body.pad #game.ingame #cv{cursor:none}
         <button type="button" role="tab" data-tab="intel" aria-selected="false"><i>03</i>Intel</button>
         <button type="button" role="tab" data-tab="ctl" aria-selected="false"><i>04</i>Controls</button>
         <button type="button" role="tab" data-tab="rec" aria-selected="false"><i>05</i>Records</button>
+        <button type="button" role="tab" data-tab="lb" aria-selected="false"><i>06</i>Leaderboard</button>
       </nav>
       <div class="mtip" aria-live="polite"><span class="lbl">Field note</span><p id="tipText"></p></div>
       <main class="mpane">
@@ -435,6 +461,8 @@ body.pad #game.ingame #cv{cursor:none}
           </div>
           <div class="lbl msh">Mode</div>
           <div class="mmodes" id="modeList"></div>
+          <label class="lbl msh" for="lbName">Leaderboard name</label>
+          <input id="lbName" class="lbname" maxlength="16" placeholder="Your name, posted when you die" autocomplete="nickname" spellcheck="false">
           <button class="deploy" id="bDeploy" type="button"><span>Deploy</span><small id="deploySub"></small></button>
         </section>
         <section id="tab-col" class="tab" hidden>
@@ -465,6 +493,10 @@ body.pad #game.ingame #cv{cursor:none}
           <div class="recs" id="recList"></div>
           <div class="rstats" id="recStats"></div>
         </section>
+        <section id="tab-lb" class="tab" hidden>
+          <div class="lbhead"><div class="lbl msh">Leaderboard · ranked by round</div><div class="lbmodes" id="lbModes"><button type="button" data-m="std" class="on">Standard</button><button type="button" data-m="chaos">Chaos</button></div></div>
+          <div class="lbwrap" id="lbTable"></div>
+        </section>
       </main>
     </div>
   </div>
@@ -491,6 +523,7 @@ body.pad #game.ingame #cv{cursor:none}
       <div class="stats"><div><b id="sKills">0</b><span class="lbl">Kills</span></div><div><b id="sPts">0</b><span class="lbl">Points earned</span></div><div><b id="sBest">1</b><span class="lbl">Best round</span></div></div>
       <p>Best gun this run: <b id="sGun"></b></p>
       <p id="sAugs"></p>
+      <div class="lbover" id="lbOver"></div>
       <div class="modes"><button class="go-btn" id="bAgain" type="button">Run it back</button><button class="go-btn ghost" id="bMenu2" type="button">Main menu</button></div>
     </div>
   </div>
@@ -1096,7 +1129,7 @@ const critX=()=>2+.25*A('crit')+(P.perks.has('dead')?.5:0);
 function recalcHp(){const old=P.maxHp||100;let m=100+(P.perks.has('iron')?100:0)+25*A('hp');if(A('glass'))m*=.5;if(A('berserk'))m*=.75;m=Math.round(m);P.maxHp=m;P.hp=clamp(P.hp*(m/old),1,m);}
 function newRun(){
  applyLayout(CHAOS);
- Object.assign(P,{x:START.x,y:START.y,r:16,hp:100,maxHp:100,aim:-Math.PI/2,guns:[starter(),null,null],cur:0,fireCd:0,reloadT:0,reloadMax:1,lastHurt:9,invuln:0,perks:new Set(),augCount:{},pts:500,kills:0,earned:0,second:0,best:null,meleeCd:0,knifeT:0,qrUses:0,bowie:false,slots:[],shield:0,adren:0,btT:0,btCd:0,phoenixUsed:false,fieldT:2,shotN:0,orbA:0,orbHit:new Map(),walk:0});
+ Object.assign(P,{x:START.x,y:START.y,r:16,hp:100,maxHp:100,aim:-Math.PI/2,guns:[starter(),null,null],cur:0,fireCd:0,reloadT:0,reloadMax:1,lastHurt:9,invuln:0,perks:new Set(),augCount:{},pts:500,kills:0,earned:0,second:0,best:null,meleeCd:0,knifeT:0,qrUses:0,bowie:false,slots:[],shield:0,adren:0,btT:0,btCd:0,phoenixUsed:false,fieldT:2,shotN:0,fired:0,orbA:0,orbHit:new Map(),walk:0});
  if(!PSPR)PSPR=playerSprite();if(!GRAIN)makeGrain();groanT=2;
  P.best=P.guns[0];P.prone=0;PERKS.forEach(q=>q.coins=false);CASE=[];LEAD.x=LEAD.y=0;HM.t=0;P.tac='frag';P.nades=2;P.nadeCd=0;NADES=[];EGG.state=0;EGG.t=0;
  visited=new Set([0]);ptsAcc=0;P.stam=undefined;P.sprint=false;P.sprintToggle=false;P.winded=false;P.faceA=undefined;P.aimT=-9;BOTTLES=[];P.drink=null;WINDOWS.forEach(w=>w.boards=6);P.repairPts=0;zombies=[];bullets=[];ground=[];pups=[];parts=[];texts=[];bolts=[];booms=[];flyers=[];souls=[];dying=[];MOTES=[];timers={insta:0,dbl:0};
@@ -1627,7 +1660,7 @@ function fire(){
  if(g.ammo<=0){startReload();return;}
  let shots=0;
  while(P.fireCd<=0&&g.ammo>0&&shots<3){
-  shots++;P.fireCd+=1/(g.rate*rateMul()*(g.x==='sweet'?g.spin:1)*(g.wolfT>0?1.6:1));
+  shots++;P.fired++;P.fireCd+=1/(g.rate*rateMul()*(g.x==='sweet'?g.spin:1)*(g.wolfT>0?1.6:1));
   if(!(g.trait==='bottomless'&&Math.random()<.35)&&g.pat!=='endless')g.ammo--;
   if(g.ww)wonderShot(g);else{normalShot(g);if(g.type!=='launcher')ejectCasing(g);}
   muzzle=.06;if(padMode)rumble(g.type==='shotgun'||g.type==='sniper'||g.type==='launcher'?.35:0,.18,45);
@@ -2500,7 +2533,7 @@ function buildRecords(){
  const cc=loadColl();[['Easter eggs',st.eggs||0],['Collection',CATALOG.filter(x=>cc[x.k]&&cc[x.k].n).length+' / '+CATALOG.length],['Runs',st.runs||0],['Total kills',st.kills||0],['Most kills in a run',st.bestKills||0],['Points earned',st.pts||0]].forEach(([k,v])=>{const d=document.createElement('div');d.innerHTML='<b></b><span class="lbl"></span>';d.firstChild.textContent=typeof v==='number'?v.toLocaleString():v;d.lastChild.textContent=k;rs.appendChild(d);});
 }
 document.querySelectorAll('.mnav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.mnav button').forEach(x=>{x.classList.toggle('on',x===b);x.setAttribute('aria-selected',x===b);});
- for(const t of ['play','col','intel','ctl','rec'])$('tab-'+t).hidden=t!==b.dataset.tab;});
+ for(const t of ['play','col','intel','ctl','rec','lb'])$('tab-'+t).hidden=t!==b.dataset.tab;if(b.dataset.tab==='lb')LB.load();});
 (function(){const il=$('intelList');for(const [t,p,c] of INTEL){const d=document.createElement('div');d.style.setProperty('--ic',c);d.innerHTML='<b></b><p></p>';d.children[0].textContent=t;d.children[1].textContent=p;il.appendChild(d);}})();
 let tipI=Math.floor(Math.random()*TIPS.length);function nextTip(){const el=$('tipText');el.classList.add('fade');setTimeout(()=>{tipI=(tipI+1)%TIPS.length;el.textContent=TIPS[tipI];el.classList.remove('fade');},400);}
 $('tipText').textContent=TIPS[tipI];setInterval(()=>{if(state==='menu')nextTip();},7000);
@@ -2648,7 +2681,7 @@ function finishOver(){
  const g=P.best;const el=$('sGun');el.textContent=`${g.name} · ${RAR[g.ri].n} ${g.label} · Lv ${g.level}`;el.style.color=RAR[g.ri].c;
  const augs=P.slots.map(k=>{const p=pdef(k);return p.n+(A(k)>1?' Lv '+A(k):'');});
  $('sAugs').textContent=augs.length?'Augments: '+augs.join(', '):'No augments picked.';
- ambStop();$('ovOver').hidden=false;$('bAgain').focus();
+ ambStop();$('ovOver').hidden=false;LB.over();$('bAgain').focus();
 }
 function proneSpot(){for(const q of PERKS)if(Math.hypot(q.x-P.x,q.y-P.y)<75)return q;return null;}
 function goProne(){if(!playing()||P.drink||P.prone>0)return;const q=proneSpot();if(!q)return;P.prone=1.4;P.proneP=q;P.sprint=false;P.sprintToggle=false;P.reloadT=0;P.proneSide=q.x>=P.x?1:-1;sfx('thud');}
@@ -2709,7 +2742,7 @@ function renderMenuBg(){
  for(const e of EMB){e.x+=(e.vx+Math.sin(t*1.2+e.ph)*10)/60;e.y+=e.vy/60;const a=Math.max(0,Math.min(1,e.y/H))*.8;ctx2.fillStyle=`rgba(255,${110+Math.round(60*Math.sin(t*3+e.ph))},50,${a})`;ctx2.beginPath();ctx2.arc(e.x,e.y,e.r,0,7);ctx2.fill();}
  EMB=EMB.filter(e=>e.y>-10);hintShown=true;
 }
-function start(){CHAOS=MODES[selMode].id==='chaos';cv.classList.remove('powering','menubg','dying');$('game').classList.add('ingame');cv.classList.add('nopower');initAudio();if(AC&&AC.state==='suspended')AC.resume();newRun();ambStart();$('ovStart').hidden=true;$('ovOver').hidden=true;$('ovPause').hidden=true;$('hud').hidden=false;}
+function start(){CHAOS=MODES[selMode].id==='chaos';cv.classList.remove('powering','menubg','dying');$('game').classList.add('ingame');cv.classList.add('nopower');initAudio();if(AC&&AC.state==='suspended')AC.resume();newRun();LB.begin();ambStart();$('ovStart').hidden=true;$('ovOver').hidden=true;$('ovPause').hidden=true;$('hud').hidden=false;}
 function toMenu(){state='menu';ambStop();cv.classList.remove('dying');clearAnn();colSel=null;$('cmp').hidden=true;cmpKey='';$('ztoast').classList.remove('go');$('announce').classList.remove('go');menuT0=performance.now();$('ovPause').hidden=true;$('ovOver').hidden=true;$('ovPick').hidden=true;$('hud').hidden=true;cv.classList.remove('nopower','powering');cv.classList.add('menubg');$('game').classList.remove('ingame');selMode=LAYOUT_CHAOS?1:0;buildMenu();$('ovStart').hidden=false;$('bDeploy').focus();}
 $('bDeploy').onclick=start;$('bAgain').onclick=start;$('bMenu2').onclick=toMenu;
 let quitArm=0;$('bQuit').onclick=()=>{const b=$('bQuit');if(performance.now()-quitArm<3000){b.textContent='Quit';toMenu();return;}quitArm=performance.now();b.textContent='Tap again to quit';setTimeout(()=>{b.textContent='Quit';},3000);};
@@ -2719,6 +2752,36 @@ Object.assign(P,{x:1280,y:1040,r:16,hp:100,maxHp:100,guns:[starter(),null,null],
 paintMap();
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(state==='menu')paintMap();});
 requestAnimationFrame(frame);
+
+/* ================= LEADERBOARD ================= */
+const LB=(()=>{
+ const NK='strom.name';let token=null,posted=false,lastId=null,mode='std';
+ const getName=()=>{try{return localStorage.getItem(NK)||'';}catch(e){return '';}};
+ const setName=v=>{try{localStorage.setItem(NK,v);}catch(e){}};
+ const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const api=(path,opt)=>fetch('/api/'+path,Object.assign({headers:{'content-type':'application/json'}},opt||{})).then(async r=>{let d={};try{d=await r.json();}catch(e){}if(!r.ok)throw new Error(d.error||('HTTP '+r.status));return d;});
+ const inp=$('lbName');inp.value=getName();inp.addEventListener('input',()=>setName(inp.value.trim()));
+ function begin(){token=null;posted=false;api('run',{method:'POST'}).then(d=>{token=d.token;}).catch(()=>{token=null;});}
+ function post(name){const box=$('lbOver');name=(name||'').trim();if(!name){return;}
+  setName(name);inp.value=name;box.textContent='Posting to the leaderboard…';
+  const m=LAYOUT_CHAOS?'chaos':'std';
+  api('score',{method:'POST',body:JSON.stringify({token,name,rounds:round,kills:P.kills,shots:P.fired||0,map:MAPS[selMap].name,mode:m})})
+   .then(d=>{posted=true;lastId=d.id;box.innerHTML=`Posted as <b>${esc(name)}</b> · <b>#${d.rank}</b> on the ${m==='chaos'?'Chaos':'Standard'} leaderboard · ${(P.fired||0).toLocaleString()} bullets fired`;})
+   .catch(e=>{box.textContent='Could not post: '+e.message;});}
+ function askName(msg){const box=$('lbOver');box.innerHTML=`<div>${esc(msg)}</div><div class="row"><input class="lbname" id="lbName2" maxlength="16" placeholder="Your name" spellcheck="false"><button type="button" id="lbPost">Post</button></div>`;
+  const i2=$('lbName2');$('lbPost').onclick=()=>post(i2.value);i2.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter')post(i2.value);});}
+ function over(){const box=$('lbOver');box.textContent='';if(posted)return;
+  if(!token){box.textContent=location.protocol.startsWith('http')?'Leaderboard is offline right now.':'';return;}
+  const n=getName();if(n)post(n);else askName('Add a name to put this run on the leaderboard.');}
+ function render(rows){const el=$('lbTable');
+  if(!rows.length){el.innerHTML='<div class="lbmsg">No runs yet. Be the first name on the wall.</div>';return;}
+  el.innerHTML='<table class="lbt"><thead><tr><th>#</th><th>Name</th><th>Round</th><th>Kills</th><th>Bullets</th></tr></thead><tbody>'+
+   rows.map((r,i)=>`<tr${r.id===lastId?' class="me"':''}><td>${i+1}</td><td>${esc(r.name)}</td><td class="rd">${r.rounds}</td><td>${r.kills.toLocaleString()}</td><td>${r.shots.toLocaleString()}</td></tr>`).join('')+'</tbody></table>';}
+ function load(){const el=$('lbTable');el.innerHTML='<div class="lbmsg">Loading…</div>';
+  api('leaderboard?mode='+mode+'&limit=50').then(d=>render(d.scores||[])).catch(()=>{el.innerHTML='<div class="lbmsg">Leaderboard is offline right now.</div>';});}
+ document.querySelectorAll('#lbModes button').forEach(b=>b.onclick=()=>{mode=b.dataset.m;document.querySelectorAll('#lbModes button').forEach(x=>x.classList.toggle('on',x===b));load();});
+ return {begin,over,load};
+})();
 </script>
 
 </body></html>

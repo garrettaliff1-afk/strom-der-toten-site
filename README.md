@@ -1,10 +1,17 @@
 # strom-der-toten-site
 
-Garrett's site. Static files served by Cloudflare Workers (static assets).
+Garrett's site + the Strom der Toten leaderboard, on Cloudflare Workers.
 
-- `index.html` → `/`
-- `games.html` → `/games`
-- `strom-der-toten.html` → `/strom-der-toten` (the game, exported from the Claude artifact)
+| File | URL |
+|---|---|
+| `index.html` | `/` |
+| `games.html` | `/games` |
+| `strom-der-toten.html` | `/strom-der-toten` (the game) |
+| `leaderboard.html` | `/leaderboard` |
+| `worker.js` | `/api/*` leaderboard API (D1 database `strom-leaderboard`) |
 
 Every push to `main` redeploys via Cloudflare Workers Builds.
-To update the game, replace `strom-der-toten.html` with the new build.
+
+Leaderboard ranking: round reached, then kills, then fewer bullets fired.
+To remove a bad entry: set an `ADMIN_KEY` secret on the Worker, then
+`curl -X DELETE https://<site>/api/score/<id> -H "x-admin-key: <key>"`.

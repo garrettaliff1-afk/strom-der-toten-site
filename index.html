@@ -49,6 +49,17 @@ h2{font-family:var(--display);font-weight:400;font-size:24px;margin:0 0 16px;col
 .card p{margin:0;color:var(--dim);font-size:15px}
 .board{background:var(--panel);border:1px dashed var(--line);border-radius:3px;padding:28px;text-align:center;color:var(--dim)}
 .board strong{display:block;font-family:var(--display);font-weight:400;color:var(--text);font-size:20px;margin-bottom:6px}
+.lbt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;background:var(--panel);border:1px solid var(--line)}
+.lbt th{text-align:right;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);padding:10px 14px;border-bottom:1px solid var(--line)}
+.lbt td{text-align:right;padding:9px 14px;border-top:1px solid rgba(255,255,255,.05)}
+.lbt th:nth-child(2),.lbt td:nth-child(2){text-align:left}
+.lbt td:first-child{color:var(--dim);width:3em}
+.lbt tr:first-child td:first-child{color:var(--gold)}
+.lbt td.rd{font-family:var(--display);color:var(--blood);font-size:20px}
+.more{display:inline-block;margin-top:14px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:13px;text-decoration:none}
+.tabs{display:flex;gap:6px;margin-bottom:12px}
+.tabs button{font:700 12px var(--body);letter-spacing:.14em;text-transform:uppercase;padding:7px 14px;border:1px solid var(--line);border-radius:3px;background:none;color:var(--dim);cursor:pointer}
+.tabs button.on{background:var(--gold);color:#1a0f02;border-color:var(--gold)}
 footer{margin-top:auto;padding:24px 0;border-top:1px solid var(--line);color:var(--dim);font-size:13px}
 </style>
 </head>
@@ -56,7 +67,7 @@ footer{margin-top:auto;padding:24px 0;border-top:1px solid var(--line);color:var
 <header>
   <div class="wrap">
     <a class="brand" href="/">GARRETT</a>
-    <nav><a href="/">Home</a><a href="/games">Games</a></nav>
+    <nav><a href="/">Home</a><a href="/games">Games</a><a href="/leaderboard">Leaderboard</a></nav>
   </div>
 </header>
 
@@ -82,8 +93,9 @@ footer{margin-top:auto;padding:24px 0;border-top:1px solid var(--line);color:var
 
   <section id="leaderboard">
     <div class="wrap">
-      <h2>Leaderboard</h2>
-      <div class="board"><strong>Coming soon</strong>Global high scores are on the way. For now, your best runs are saved on your own device.</div>
+      <h2>Top survivors</h2>
+      <div id="lb"><div class="board">Loading…</div></div>
+      <a class="more" href="/leaderboard">Full leaderboard &rarr;</a>
     </div>
   </section>
 </main>
@@ -91,5 +103,21 @@ footer{margin-top:auto;padding:24px 0;border-top:1px solid var(--line);color:var
 <footer>
   <div class="wrap">Made by Garrett.</div>
 </footer>
+<script>
+(function(){
+  const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const el=document.getElementById('lb'),limit=+(el.dataset.limit||10),tabs=document.getElementById('lbTabs');
+  function load(mode){
+    fetch('/api/leaderboard?mode='+mode+'&limit='+limit).then(r=>r.json()).then(d=>{
+      const rows=d.scores||[];
+      if(!rows.length){el.innerHTML='<div class="board"><strong>No runs yet</strong>Be the first name on the wall.</div>';return;}
+      el.innerHTML='<table class="lbt"><thead><tr><th>#</th><th>Name</th><th>Round</th><th>Kills</th><th>Bullets fired</th></tr></thead><tbody>'+
+        rows.map((r,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(r.name)+'</td><td class="rd">'+r.rounds+'</td><td>'+r.kills.toLocaleString()+'</td><td>'+r.shots.toLocaleString()+'</td></tr>').join('')+'</tbody></table>';
+    }).catch(()=>{el.innerHTML='<div class="board">Leaderboard is offline right now.</div>';});
+  }
+  if(tabs)tabs.querySelectorAll('button').forEach(b=>b.onclick=()=>{tabs.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));load(b.dataset.m);});
+  load('std');
+})();
+</script>
 </body>
 </html>
