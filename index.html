@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Strom der Toten</title>
+<meta name="description" content="Strom der Toten — a top-down zombie roguelike looter-shooter you play in your browser.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Chakra+Petch:wght@400;600;700&display=swap">
+<style>
+:root{
+  --ink:#0b0d10;--panel:#12161b;--line:#2b323b;--text:#e6e9ed;--dim:#8a95a3;
+  --blood:#d23a2e;--gold:#f0b347;
+  --display:"Bungee",Impact,"Arial Black",sans-serif;
+  --body:"Chakra Petch","Segoe UI",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ink);color:var(--text);font-family:var(--body);font-size:17px;line-height:1.55}
+body{min-height:100vh;display:flex;flex-direction:column;
+  background:
+    radial-gradient(ellipse 80% 55% at 50% -10%,rgba(210,58,46,.22),transparent 70%),
+    radial-gradient(ellipse 60% 40% at 50% 110%,rgba(240,179,71,.06),transparent 70%),
+    var(--ink)}
+a{color:var(--gold)}
+.wrap{width:min(860px,100% - 40px);margin:0 auto}
+header{padding:18px 0;border-bottom:1px solid var(--line)}
+header .wrap{display:flex;justify-content:space-between;align-items:center;gap:16px}
+.brand{font-family:var(--display);color:var(--blood);text-decoration:none;font-size:18px;letter-spacing:.02em}
+nav a{color:var(--dim);text-decoration:none;font-weight:600;font-size:14px;letter-spacing:.12em;text-transform:uppercase;margin-left:20px}
+nav a:hover{color:var(--text)}
+.hero{padding:clamp(56px,12vh,120px) 0 48px;text-align:center}
+.kicker{font-size:13px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--dim);margin:0 0 14px}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(46px,11vw,104px);line-height:.95;margin:0;color:var(--blood);
+  text-shadow:0 3px 0 #3a0d0a,0 0 40px rgba(210,58,46,.4)}
+.tag{max-width:34em;margin:22px auto 34px;color:var(--text);font-size:clamp(16px,2.4vw,19px)}
+.play{display:inline-block;font-family:var(--display);font-size:22px;letter-spacing:.04em;text-decoration:none;
+  color:#1a0f02;background:var(--gold);padding:16px 40px;border-radius:4px;
+  box-shadow:0 4px 0 #8a5c12,0 0 0 1px rgba(0,0,0,.4);transition:transform .08s,box-shadow .08s}
+.play:hover{filter:brightness(1.08)}
+.play:active{transform:translateY(3px);box-shadow:0 1px 0 #8a5c12}
+.hint{margin-top:14px;font-size:13px;color:var(--dim)}
+section{padding:40px 0;border-top:1px solid var(--line)}
+h2{font-family:var(--display);font-weight:400;font-size:24px;margin:0 0 16px;color:var(--text)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--blood);padding:16px 18px;border-radius:3px}
+.card h3{margin:0 0 6px;font-size:15px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
+.card p{margin:0;color:var(--dim);font-size:15px}
+.board{background:var(--panel);border:1px dashed var(--line);border-radius:3px;padding:28px;text-align:center;color:var(--dim)}
+.board strong{display:block;font-family:var(--display);font-weight:400;color:var(--text);font-size:20px;margin-bottom:6px}
+footer{margin-top:auto;padding:24px 0;border-top:1px solid var(--line);color:var(--dim);font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <a class="brand" href="/">GARRETT</a>
+    <nav><a href="/">Home</a><a href="/games">Games</a></nav>
+  </div>
+</header>
+
+<main>
+  <div class="hero wrap">
+    <p class="kicker">A browser zombie roguelike</p>
+    <h1>Strom der<br>Toten</h1>
+    <p class="tag">Hold the bunker. Survive the rounds. Loot whatever drops off the dead, and see how deep into the flood you can last.</p>
+    <a class="play" href="/strom-der-toten">Play Strom der Toten</a>
+    <p class="hint">Runs right in your browser. Desktop or mobile, no install.</p>
+  </div>
+
+  <section>
+    <div class="wrap">
+      <h2>What you're in for</h2>
+      <div class="grid">
+        <div class="card"><h3>Round-based</h3><p>Waves get bigger and meaner every round. Spend your points wisely.</p></div>
+        <div class="card"><h3>Loot rarity</h3><p>Guns drop in tiers from common to legendary. Chase the good stuff.</p></div>
+        <div class="card"><h3>Roguelike runs</h3><p>Every run is fresh. Die, learn, go again.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="leaderboard">
+    <div class="wrap">
+      <h2>Leaderboard</h2>
+      <div class="board"><strong>Coming soon</strong>Global high scores are on the way. For now, your best runs are saved on your own device.</div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">Made by Garrett.</div>
+</footer>
+</body>
+</html>
