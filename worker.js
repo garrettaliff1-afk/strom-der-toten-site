@@ -2,7 +2,7 @@
 // Static files are served by Workers static assets; only /api/* reaches this code.
 //
 //   POST /api/run          -> { token }                 start a run (call when the player deploys)
-//   POST /api/score        { token, name, rounds, kills, shots, map, mode } -> { ok, id, rank }
+//   POST /api/score        { token, name, rounds, kills, shots, objectives (0-7), egg, map, mode } -> { ok, id, rank }
 //   GET  /api/leaderboard  ?mode=std|chaos|all&limit=50 -> { scores: [...] }
 //   DELETE /api/score/:id  header X-Admin-Key           remove a bad entry (needs ADMIN_KEY secret)
 //
@@ -21,6 +21,8 @@ const SCHEMA = [
      rounds INTEGER NOT NULL,
      kills INTEGER NOT NULL,
      shots INTEGER NOT NULL,
+     objectives INTEGER NOT NULL DEFAULT 0,
+     egg INTEGER NOT NULL DEFAULT 0,
      map TEXT NOT NULL,
      mode TEXT NOT NULL,
      duration INTEGER NOT NULL,
@@ -35,6 +37,11 @@ let schemaReady = false;
 async function ensureSchema(db) {
   if (schemaReady) return;
   await db.batch(SCHEMA.map((s) => db.prepare(s)));
+  // Columns added after launch: add them to existing databases.
+  const cols = (await db.prepare("PRAGMA table_info(scores)").all()).results.map((c) => c.name);
+  for (const [name, def] of [["objectives", "INTEGER NOT NULL DEFAULT 0"], ["egg", "INTEGER NOT NULL DEFAULT 0"]]) {
+    if (!cols.includes(name)) await db.prepare(`ALTER TABLE scores ADD COLUMN ${name} ${def}`).run();
+  }
   schemaReady = true;
 }
 
@@ -90,6 +97,9 @@ async function submitScore(request, env) {
   }
   const name = cleanName(body.name);
   const rounds = int(body.rounds), kills = int(body.kills), shots = int(body.shots);
+  const objectives = int(body.objectives) ?? 0;
+  const egg = body.egg === true || body.egg === 1 ? 1 : 0;
+  if (objectives > 7 || (egg && objectives !== 7)) return json({ error: "Bad objectives." }, 400);
   const mode = body.mode === "chaos" ? "chaos" : "std";
   const map = typeof body.map === "string" ? body.map.slice(0, 24) : "Eisenhof";
   if (!name) return json({ error: "Enter a name (1–16 characters)." }, 400);
@@ -113,9 +123,9 @@ async function submitScore(request, env) {
   if (!claim.meta || claim.meta.changes !== 1) return json({ error: "This run was already posted." }, 409);
 
   const ins = await env.DB.prepare(
-    "INSERT INTO scores (name, rounds, kills, shots, map, mode, duration, ip, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    "INSERT INTO scores (name, rounds, kills, shots, objectives, egg, map, mode, duration, ip, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
   )
-    .bind(name, rounds, kills, shots, map, mode, duration, ip, t)
+    .bind(name, rounds, kills, shots, objectives, egg, map, mode, duration, ip, t)
     .run();
   const id = ins.meta.last_row_id;
 
@@ -134,7 +144,7 @@ async function leaderboard(url, env) {
   const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get("limit") || "50", 10) || 50));
   const where = modeQ === "all" ? "" : "WHERE mode = ?1";
   const stmt = env.DB.prepare(
-    `SELECT id, name, rounds, kills, shots, map, mode, created_at FROM scores ${where}
+    `SELECT id, name, rounds, kills, shots, objectives, egg, map, mode, created_at FROM scores ${where}
      ORDER BY rounds DESC, kills DESC, shots ASC, created_at ASC LIMIT ${limit}`
   );
   const res = await (modeQ === "all" ? stmt : stmt.bind(modeQ === "chaos" ? "chaos" : "std")).all();

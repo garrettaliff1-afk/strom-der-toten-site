@@ -400,6 +400,7 @@ body.pad #game.ingame #cv{cursor:none}
 .lbt td.rd{font:400 20px var(--display);color:var(--blood)}
 .lbt tr.me td{background:rgba(240,179,71,.1)}
 .lbt tr:nth-child(1) td:first-child{color:var(--gold)}
+.lbt .egg{color:#7fd8ff}
 .lbmsg{padding:22px;text-align:center;color:var(--dim)}
 .lbover{margin:6px 0 2px;font-size:14px;color:var(--dim)}
 .lbover b{color:var(--gold)}
@@ -2754,6 +2755,7 @@ if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(state=
 requestAnimationFrame(frame);
 
 /* ================= LEADERBOARD ================= */
+function objCount(){return [power,QUEST.step>=4,SIDE.lanternDone,ARMORY.open,ALTAR.state===2,TELE.allLinked,VAULT.open].filter(Boolean).length;}
 const LB=(()=>{
  const NK='strom.name';let token=null,posted=false,lastId=null,mode='std';
  const getName=()=>{try{return localStorage.getItem(NK)||'';}catch(e){return '';}};
@@ -2765,8 +2767,9 @@ const LB=(()=>{
  function post(name){const box=$('lbOver');name=(name||'').trim();if(!name){return;}
   setName(name);inp.value=name;box.textContent='Posting to the leaderboard…';
   const m=LAYOUT_CHAOS?'chaos':'std';
-  api('score',{method:'POST',body:JSON.stringify({token,name,rounds:round,kills:P.kills,shots:P.fired||0,map:MAPS[selMap].name,mode:m})})
-   .then(d=>{posted=true;lastId=d.id;box.innerHTML=`Posted as <b>${esc(name)}</b> · <b>#${d.rank}</b> on the ${m==='chaos'?'Chaos':'Standard'} leaderboard · ${(P.fired||0).toLocaleString()} bullets fired`;})
+  const objs=objCount(),egg=EGG.state===3;
+  api('score',{method:'POST',body:JSON.stringify({token,name,rounds:round,kills:P.kills,shots:P.fired||0,objectives:objs,egg,map:MAPS[selMap].name,mode:m})})
+   .then(d=>{posted=true;lastId=d.id;box.innerHTML=`Posted as <b>${esc(name)}</b> · <b>#${d.rank}</b> on the ${m==='chaos'?'Chaos':'Standard'} leaderboard · ${objs} / 7 objectives${egg?' ★':''} · ${(P.fired||0).toLocaleString()} bullets fired`;})
    .catch(e=>{box.textContent='Could not post: '+e.message;});}
  function askName(msg){const box=$('lbOver');box.innerHTML=`<div>${esc(msg)}</div><div class="row"><input class="lbname" id="lbName2" maxlength="16" placeholder="Your name" spellcheck="false"><button type="button" id="lbPost">Post</button></div>`;
   const i2=$('lbName2');$('lbPost').onclick=()=>post(i2.value);i2.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter')post(i2.value);});}
@@ -2775,8 +2778,8 @@ const LB=(()=>{
   const n=getName();if(n)post(n);else askName('Add a name to put this run on the leaderboard.');}
  function render(rows){const el=$('lbTable');
   if(!rows.length){el.innerHTML='<div class="lbmsg">No runs yet. Be the first name on the wall.</div>';return;}
-  el.innerHTML='<table class="lbt"><thead><tr><th>#</th><th>Name</th><th>Round</th><th>Kills</th><th>Bullets</th></tr></thead><tbody>'+
-   rows.map((r,i)=>`<tr${r.id===lastId?' class="me"':''}><td>${i+1}</td><td>${esc(r.name)}</td><td class="rd">${r.rounds}</td><td>${r.kills.toLocaleString()}</td><td>${r.shots.toLocaleString()}</td></tr>`).join('')+'</tbody></table>';}
+  el.innerHTML='<table class="lbt"><thead><tr><th>#</th><th>Name</th><th>Round</th><th>Objectives</th><th>Kills</th><th>Bullets</th></tr></thead><tbody>'+
+   rows.map((r,i)=>`<tr${r.id===lastId?' class="me"':''}><td>${i+1}</td><td>${esc(r.name)}</td><td class="rd">${r.rounds}</td><td>${r.objectives||0} / 7${r.egg?' <span class="egg" title="Easter egg complete">★</span>':''}</td><td>${r.kills.toLocaleString()}</td><td>${r.shots.toLocaleString()}</td></tr>`).join('')+'</tbody></table>';}
  function load(){const el=$('lbTable');el.innerHTML='<div class="lbmsg">Loading…</div>';
   api('leaderboard?mode='+mode+'&limit=50').then(d=>render(d.scores||[])).catch(()=>{el.innerHTML='<div class="lbmsg">Leaderboard is offline right now.</div>';});}
  document.querySelectorAll('#lbModes button').forEach(b=>b.onclick=()=>{mode=b.dataset.m;document.querySelectorAll('#lbModes button').forEach(x=>x.classList.toggle('on',x===b));load();});

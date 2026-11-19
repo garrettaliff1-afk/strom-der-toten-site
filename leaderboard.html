@@ -55,6 +55,7 @@ h2{font-family:var(--display);font-weight:400;font-size:24px;margin:0 0 16px;col
 .lbt th:nth-child(2),.lbt td:nth-child(2){text-align:left}
 .lbt td:first-child{color:var(--dim);width:3em}
 .lbt tr:first-child td:first-child{color:var(--gold)}
+.lbt .egg{color:#7fd8ff}
 .lbt td.rd{font-family:var(--display);color:var(--blood);font-size:20px}
 .more{display:inline-block;margin-top:14px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:13px;text-decoration:none}
 .tabs{display:flex;gap:6px;margin-bottom:12px}
@@ -96,8 +97,8 @@ footer{margin-top:auto;padding:24px 0;border-top:1px solid var(--line);color:var
     fetch('/api/leaderboard?mode='+mode+'&limit='+limit).then(r=>r.json()).then(d=>{
       const rows=d.scores||[];
       if(!rows.length){el.innerHTML='<div class="board"><strong>No runs yet</strong>Be the first name on the wall.</div>';return;}
-      el.innerHTML='<table class="lbt"><thead><tr><th>#</th><th>Name</th><th>Round</th><th>Kills</th><th>Bullets fired</th></tr></thead><tbody>'+
-        rows.map((r,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(r.name)+'</td><td class="rd">'+r.rounds+'</td><td>'+r.kills.toLocaleString()+'</td><td>'+r.shots.toLocaleString()+'</td></tr>').join('')+'</tbody></table>';
+      el.innerHTML='<table class="lbt"><thead><tr><th>#</th><th>Name</th><th>Round</th><th>Objectives</th><th>Kills</th><th>Bullets fired</th></tr></thead><tbody>'+
+        rows.map((r,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(r.name)+'</td><td class="rd">'+r.rounds+'</td><td>'+(r.objectives||0)+' / 7'+(r.egg?' <span class="egg" title="Easter egg complete">★</span>':'')+'</td><td>'+r.kills.toLocaleString()+'</td><td>'+r.shots.toLocaleString()+'</td></tr>').join('')+'</tbody></table>';
     }).catch(()=>{el.innerHTML='<div class="board">Leaderboard is offline right now.</div>';});
   }
   if(tabs)tabs.querySelectorAll('button').forEach(b=>b.onclick=()=>{tabs.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));load(b.dataset.m);});
